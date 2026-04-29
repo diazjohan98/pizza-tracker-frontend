@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import miPizzaImg from "../assets/pngtree-full-pizza-illustration-png-image_19451292.png";
 
 export default function Customer() {
   const { orderId } = useParams();
@@ -8,6 +9,7 @@ export default function Customer() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // 1. Fetch inicial
     const fetchOrder = async () => {
       try {
         setLoading(true);
@@ -18,6 +20,7 @@ export default function Customer() {
         if (!response.ok) throw new Error("No pudimos encontrar tu orden");
 
         const result = await response.json();
+        console.log("resultados:", result);
         setData(result);
       } catch (err) {
         setError(err.message);
@@ -28,6 +31,7 @@ export default function Customer() {
 
     fetchOrder();
 
+    // 2. Conexión SSE para tiempo real
     const eventSource = new EventSource(
       `http://localhost:8080/notifications?orderID=${orderId}`,
     );
@@ -44,12 +48,12 @@ export default function Customer() {
     return (
       <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center">
         <img
-          src="/src/assets/pngtree-full-pizza-illustration-png-image_19451292.png"
-          className="w-24 h-24 animate-spin-slow mb-4"
+          src="/static/pizza-img.png"
+          className="w-24 h-24 animate-bounce mb-4 drop-shadow-md"
           alt="Cargando"
         />
         <p className="text-orange-600 font-medium animate-pulse">
-          Buscando tu pizza...
+          Cargando tu orden...
         </p>
       </div>
     );
@@ -58,12 +62,12 @@ export default function Customer() {
   if (error)
     return (
       <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4 text-center">
-        <div className="bg-white p-8 rounded-2xl shadow-lg border border-rose-100">
-          <h1 className="text-2xl font-bold text-rose-600 mb-2">¡Ups! 🍕</h1>
-          <p className="text-gray-600">{error}</p>
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-rose-100 max-w-sm w-full">
+          <h1 className="text-3xl font-bold text-rose-600 mb-4">¡Ups! 🍕</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-6 py-2 bg-rose-500 text-white rounded-xl"
+            className="w-full px-6 py-3 bg-rose-500 hover:bg-rose-600 transition-colors text-white font-bold rounded-xl"
           >
             Reintentar
           </button>
@@ -71,80 +75,138 @@ export default function Customer() {
       </div>
     );
 
+  // Extraemos datos asegurando compatibilidad con los nombres del JSON de Go
   const { order, statuses } = data;
-  const currentIndex = statuses.indexOf(order.status);
+  const currentStatus = order.Status || order.status;
+  const currentIndex = statuses.indexOf(currentStatus);
+  const items = order.pizzas || order.Pizzas || [];
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 min-h-screen flex flex-col items-center p-6 md:p-8">
+    <div className="bg-gradient-to-br from-[#fdf7f0] to-[#fdf0f0] min-h-screen flex flex-col items-center py-12 px-4 sm:px-6 md:px-8 font-sans text-gray-800">
       <img
-        src="/src/assets/pngtree-full-pizza-illustration-png-image_19451292.png"
-        className="w-40 h-40 mb-10 animate-spin-slow drop-shadow-lg"
+        src={miPizzaImg}
+        className="w-28 h-28 mb-6 drop-shadow-lg animate-bounce"
         alt="Pizza"
       />
 
-      <div className="bg-white/80 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-2xl border border-white/20 max-w-3xl w-full">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 text-center tracking-tight">
+      {/* Contenedor Principal Blanca */}
+      <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-gray-100 max-w-3xl w-full">
+        {/* Cabecera */}
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-[#1a202c] text-center tracking-tight">
           Track Your Pizza Order
         </h1>
-        <div className="text-lg text-gray-500 mb-10 text-center font-medium">
-          Order #{order.id}
-        </div>
+        <p className="text-gray-500 mb-12 text-center font-medium text-lg">
+          Order #{order.ID || order.id}
+        </p>
 
-        {/* Barra de Progreso Dinámica */}
-        <div className="relative flex justify-between items-center mb-4">
-          <div className="absolute inset-x-[30px] h-1.5 bg-gray-200 top-1/2 -translate-y-1/2 rounded-full">
+        {/* Barra de Progreso (Idéntica a tu diseño) */}
+        <div className="relative flex justify-between items-center mb-12 max-w-2xl mx-auto">
+          {/* Línea de fondo */}
+          <div className="absolute inset-x-[10%] h-1 bg-gray-200 top-6 -translate-y-1/2 z-0">
             {/* Línea Verde Dinámica */}
             <div
-              className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+              className="h-full bg-[#10b981] transition-all duration-500"
               style={{
                 width: `${(currentIndex / (statuses.length - 1)) * 100}%`,
               }}
             ></div>
           </div>
 
-          {statuses.map((status, index) => (
-            <div
-              key={status}
-              className="flex-1 flex justify-center relative mx-2"
-            >
+          {statuses.map((status, index) => {
+            const isActive = index <= currentIndex;
+            return (
               <div
-                className={`size-14 rounded-full flex items-center justify-center text-white font-bold transition-all duration-500 z-10 shadow-md ${
-                  index <= currentIndex
-                    ? "bg-emerald-500 scale-110"
-                    : "bg-gray-300"
-                }`}
+                key={status}
+                className="flex flex-col items-center z-10 w-20"
               >
-                {index + 1}
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold mb-3 transition-all duration-500 ${
+                    isActive
+                      ? "bg-[#10b981] shadow-md scale-110"
+                      : "bg-[#cbd5e1]"
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <span className="text-xs font-semibold text-center text-gray-600 leading-tight">
+                  {status}
+                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Nombres de los estados */}
-        <div className="flex justify-between text-xs md:text-sm text-gray-700 mb-10 font-semibold">
-          {statuses.map((s) => (
-            <span key={s} className="flex-1 text-center mx-1">
-              {s}
-            </span>
-          ))}
-        </div>
-
-        {/* Detalles del Cliente */}
-        <div className="bg-gray-50/60 p-6 rounded-2xl border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Detalles del Envío
+        {/* SECCIÓN 1: Order Details */}
+        <div className="bg-[#f8fafc] rounded-2xl p-6 md:p-8 mb-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-[#1e293b] mb-6">
+            Order Details
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <p>
-              <span className="text-gray-500">Nombre:</span>{" "}
-              {order.customerName}
-            </p>
-            <p>
-              <span className="text-gray-500">Teléfono:</span> {order.phone}
-            </p>
-            <p className="md:col-span-2">
-              <span className="text-gray-500">Dirección:</span> {order.address}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">
+                Customer Name
+              </p>
+              <p className="font-semibold text-gray-900">
+                {order.CustomerName || order.customerName}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
+              <p className="font-semibold text-gray-900">
+                {order.Phone || order.phone}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm font-medium text-gray-500 mb-1">Address</p>
+              <p className="font-semibold text-gray-900">
+                {order.Address || order.address}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN 2: Pizzas */}
+        <div className="bg-[#f8fafc] rounded-2xl p-6 md:p-8 border border-gray-100">
+          <h2 className="text-xl font-bold text-[#1e293b] mb-6">Pizzas</h2>
+
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
+              >
+                <h3 className="font-bold text-[#1e293b] mb-4">
+                  Pizza #{index + 1}
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Type
+                    </p>
+                    <p className="font-semibold text-gray-900">
+                      {item.Pizza || item.pizza}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Size
+                    </p>
+                    <p className="font-semibold text-gray-900">
+                      {item.Size || item.size}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2 mt-2">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      Special Instructions
+                    </p>
+                    <p className="font-semibold text-gray-900">
+                      {item.Instructions || item.instructions || "None"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

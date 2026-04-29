@@ -105,16 +105,13 @@ export default function OrderForm() {
     );
 
   return (
-    // 1. Restauramos el fondo crema degradado
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 py-10 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center">
-      {/* 2. Regresamos la pizza animada */}
       <img
         src="../assets/pngtree-full-pizza-illustration-png-image_19451292.png"
         className="w-28 h-28 mb-6 drop-shadow-lg animate-bounce"
         alt="Pizza"
       />
 
-      {/* 3. Restauramos el efecto "cristal" (fondo blanco semi-transparente) en la tarjeta */}
       <div className="max-w-2xl w-full mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/50">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8 tracking-tight">
           Pide tu Pizza 🍕
@@ -127,7 +124,6 @@ export default function OrderForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* SECCIÓN: Customer Information */}
           <div className="bg-white/60 p-6 rounded-2xl border border-gray-100">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Información del cliente
@@ -178,7 +174,6 @@ export default function OrderForm() {
             </div>
           </div>
 
-          {/* SECCIÓN: Pizzas */}
           <div>
             <div className="flex items-center justify-between mb-4 px-2">
               <h2 className="text-xl font-semibold text-gray-800">Pizzas</h2>
