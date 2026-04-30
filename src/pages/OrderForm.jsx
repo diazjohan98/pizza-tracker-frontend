@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
+import gsap from "gsap";
+import AnimatedPizzaLayout from "../components/AnimatedPizzaLayout";
 export default function OrderForm() {
   const navigate = useNavigate();
+
+  const pizzaRef = useRef(null);
+  const containerRef = useRef(null);
 
   const [options, setOptions] = useState({ types: [], sizes: [] });
   const [loading, setLoading] = useState(true);
@@ -14,7 +18,6 @@ export default function OrderForm() {
     phone: "",
     address: "",
   });
-
   const [pizzas, setPizzas] = useState([
     { size: "", type: "", instructions: "" },
   ]);
@@ -25,7 +28,6 @@ export default function OrderForm() {
       .then((data) => {
         const fetchedTypes = data.pizzaTypes || [];
         const fetchedSizes = data.pizzaSizes || [];
-
         setOptions({ types: fetchedTypes, sizes: fetchedSizes });
 
         if (fetchedTypes.length > 0 && fetchedSizes.length > 0) {
@@ -34,35 +36,25 @@ export default function OrderForm() {
           ]);
         }
       })
-      .catch((err) =>
-        setError(
-          "No pudimos cargar el menú. Revisa la conexión con el servidor.",
-        ),
-      )
+      .catch(() => setError("No pudimos cargar el menú."))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleCustomerChange = (e) => {
+  const handleCustomerChange = (e) =>
     setCustomer({ ...customer, [e.target.name]: e.target.value });
-  };
-
   const handlePizzaChange = (index, field, value) => {
     const newPizzas = [...pizzas];
     newPizzas[index][field] = value;
     setPizzas(newPizzas);
   };
-
-  const addPizza = () => {
+  const addPizza = () =>
     setPizzas([
       ...pizzas,
       { size: options.sizes[0], type: options.types[0], instructions: "" },
     ]);
-  };
-
   const removePizza = (indexToRemove) => {
-    if (pizzas.length > 1) {
+    if (pizzas.length > 1)
       setPizzas(pizzas.filter((_, index) => index !== indexToRemove));
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -90,7 +82,16 @@ export default function OrderForm() {
       if (!response.ok)
         throw new Error(result.error || "Error al crear la orden");
 
-      navigate(`/customer/${result.orderId}`);
+      gsap.to(containerRef.current, {
+        opacity: 0,
+        y: 50,
+        duration: 0.5,
+        ease: "power2.in",
+      });
+
+      pizzaRef.current.playZoom(() => {
+        navigate(`/customer/${result.orderId}`);
+      });
     } catch (err) {
       setError(err.message);
       setIsSubmitting(false);
@@ -105,14 +106,13 @@ export default function OrderForm() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 py-10 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center">
-      <img
-        src="../assets/pngtree-full-pizza-illustration-png-image_19451292.png"
-        className="w-28 h-28 mb-6 drop-shadow-lg animate-bounce"
-        alt="Pizza"
-      />
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 py-10 px-4 sm:px-6 lg:px-8 font-sans flex flex-col items-center overflow-hidden">
+      <AnimatedPizzaLayout ref={pizzaRef} className="mb-6" />
 
-      <div className="max-w-2xl w-full mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/50">
+      <div
+        ref={containerRef}
+        className="max-w-2xl w-full mx-auto bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/50 z-10 relative"
+      >
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8 tracking-tight">
           Pide tu Pizza 🍕
         </h1>
@@ -137,7 +137,6 @@ export default function OrderForm() {
                   required
                   type="text"
                   name="name"
-                  placeholder="Enter your name"
                   value={customer.name}
                   onChange={handleCustomerChange}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none bg-white/80"
@@ -151,7 +150,6 @@ export default function OrderForm() {
                   required
                   type="tel"
                   name="phone"
-                  placeholder="Enter your phone number"
                   value={customer.phone}
                   onChange={handleCustomerChange}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none bg-white/80"
@@ -165,7 +163,6 @@ export default function OrderForm() {
                   required
                   type="text"
                   name="address"
-                  placeholder="Enter your address"
                   value={customer.address}
                   onChange={handleCustomerChange}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none bg-white/80"
@@ -206,7 +203,6 @@ export default function OrderForm() {
                       </button>
                     )}
                   </div>
-
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -227,7 +223,6 @@ export default function OrderForm() {
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Tipo de pizza:
@@ -247,14 +242,12 @@ export default function OrderForm() {
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Instrucción especial
                       </label>
                       <textarea
                         rows="2"
-                        placeholder="¿Alguna petición especial o modificación?"
                         value={pizza.instructions}
                         onChange={(e) =>
                           handlePizzaChange(
