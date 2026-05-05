@@ -27,6 +27,13 @@ export default function Login() {
         credentials: "include",
       });
 
+      // ¡AQUÍ ESTÁ LA MAGIA! Validamos que el backend responda con éxito
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Credenciales incorrectas");
+      }
+
+      // Si todo sale bien, recién ahí navegamos al admin
       navigate("/admin");
     } catch (err) {
       setError(err.message);
